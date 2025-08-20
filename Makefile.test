@@ -1,0 +1,95 @@
+# Makefile for Unit Tests
+CC = gcc
+CFLAGS = -Wall -Wextra -Wno-unused-parameter -g -O0 -DUNIT_TESTING
+LDFLAGS = -lcunit -lpthread
+
+# Test executables
+TEST_SERVER = test_server
+TEST_CLIENT = test_client
+
+# Test source files
+TEST_SERVER_SRC = test_server.c
+TEST_CLIENT_SRC = test_client.c
+
+# Original source files (for integration tests if needed)
+SERVER_SRC = server.c
+CLIENT_SRC = client.c
+
+# All tests target
+all: tests
+
+tests: $(TEST_SERVER) $(TEST_CLIENT)
+
+# Build test executables
+$(TEST_SERVER): $(TEST_SERVER_SRC)
+	$(CC) $(CFLAGS) -o $(TEST_SERVER) $(TEST_SERVER_SRC) $(LDFLAGS)
+
+$(TEST_CLIENT): $(TEST_CLIENT_SRC)
+	$(CC) $(CFLAGS) -o $(TEST_CLIENT) $(TEST_CLIENT_SRC) $(LDFLAGS)
+
+# Run all tests
+test: tests
+	@echo "========================================="
+	@echo "Running Server Unit Tests..."
+	@echo "========================================="
+	./$(TEST_SERVER)
+	@echo ""
+	@echo "========================================="
+	@echo "Running Client Unit Tests..."
+	@echo "========================================="
+	./$(TEST_CLIENT)
+	@echo ""
+	@echo "========================================="
+	@echo "All tests completed!"
+	@echo "========================================="
+
+# Run server tests only
+test-server: $(TEST_SERVER)
+	./$(TEST_SERVER)
+
+# Run client tests only
+test-client: $(TEST_CLIENT)
+	./$(TEST_CLIENT)
+
+# Valgrind memory check
+memcheck-server: $(TEST_SERVER)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(TEST_SERVER)
+
+memcheck-client: $(TEST_CLIENT)
+	valgrind --leak-check=full --show-leak-kinds=all ./$(TEST_CLIENT)
+
+memcheck: memcheck-server memcheck-client
+
+# Coverage analysis (requires gcov)
+coverage: CFLAGS += --coverage
+coverage: LDFLAGS += --coverage
+coverage: clean tests
+	./$(TEST_SERVER)
+	./$(TEST_CLIENT)
+	gcov $(TEST_SERVER_SRC) $(TEST_CLIENT_SRC)
+	@echo "Coverage reports generated. Check *.gcov files."
+
+# Clean up
+clean:
+	rm -f $(TEST_SERVER) $(TEST_CLIENT)
+	rm -f *.gcov *.gcda *.gcno
+	rm -f *.o
+	rm -f core
+
+# Install CUnit (helper target for Ubuntu/Debian)
+install-cunit:
+	@echo "Installing CUnit library..."
+	sudo apt-get update
+	sudo apt-get install -y libcunit1 libcunit1-dev
+
+# Install CUnit (helper target for RHEL/CentOS/Fedora)
+install-cunit-rhel:
+	@echo "Installing CUnit library..."
+	sudo yum install -y CUnit CUnit-devel
+
+# Install CUnit (helper target for macOS with Homebrew)
+install-cunit-mac:
+	@echo "Installing CUnit library..."
+	brew install cunit
+
+.PHONY: all tests test test-server test-client memcheck memcheck-server memcheck-client coverage clean install-cunit install-cunit-rhel install-cunit-mac
