@@ -13,14 +13,14 @@ A robust, secure, and high-performance TCP file server implemented in C for Linu
 ### Binary Protocol
     Client initiates the connection to server:
     Client -> Server
-        2 Bytes: filename length
-        x Bytes: filepath/filename
+        2 Bytes: filepath/name length x Bytes
+        x Bytes: filepath/name
         8 Bytes: offset (to resume partial transfers)
 
     Server responds with following:
     Server -> Client
         1 Bytes: Status code
-        8 Bytes: file size
+        8 Bytes: file size = y Bytes
         y Bytes: file data
 
 ## Build Instructions
